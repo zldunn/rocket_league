@@ -29,9 +29,9 @@ args = vars(ap.parse_args())
 # define the lower and upper boundaries of the "green"
 # ball in the HSV color space, then initialize the
 
-lower = {'red':(165, 32, 2),  'blue':(100, 200, 45), 'yellow':(20, 135, 24), 'orange':(0, 119, 50), 'teal': (85, 107, 255)}
+lower = {'red':(165, 32, 2),  'blue':(100, 200, 45), 'yellow':(20, 66, 160), 'orange':(0, 119, 50), 'teal': (81, 66, 204)}
 upper = {'red':(180,255,255), 'blue':(117,255,255), 'yellow':(54,255,255),'orange':(10,255,255), 'teal': (100, 160, 255)}
-colors = {'red':(0,0,255), 'green':(0,255,0), 'blue':(255,0,0), 'yellow':(0, 255, 217), 'orange':(0,140,255)}
+colors = {'red':(0,0,255), 'green':(0,255,0), 'teal':(255,0,0), 'yellow':(0, 255, 217), 'orange':(0,140,255)}
 
 # Write some Text
 
@@ -139,6 +139,11 @@ while True:
                 ((x, y), radius) = cv2.minEnclosingCircle(c)
                 M = cv2.moments(c)
                 front_car = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+                cv2.circle(frame, (int(x), int(y)), int(radius), colors[color], 2)
+            elif color == "teal":
+                c = max(cnts, key=cv2.contourArea)
+                ((x, y), radius) = cv2.minEnclosingCircle(c)
+                M = cv2.moments(c)
                 cv2.circle(frame, (int(x), int(y)), int(radius), colors[color], 2)
     print(rect1_center)
     if rect1_center and ball_center and front_car:
