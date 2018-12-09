@@ -13,11 +13,11 @@ import time
 import math
 from imutils.video.fps import FPS
 from imutils.video.pivideostream import PiVideoStream
-import spidev
 import RPi.GPIO as GPIO
 
 def Average(lst):
     return int(sum(lst) / len(lst))
+
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-v", "--video",
@@ -34,7 +34,6 @@ upper = {'red':(180,255,255), 'blue':(117,255,255), 'yellow':(54,255,255),'orang
 colors = {'red':(0,0,255), 'green':(0,255,0), 'teal':(255,0,0), 'yellow':(0, 255, 217), 'orange':(0,140,255)}
 
 # Write some Text
-
 font                   = cv2.FONT_HERSHEY_SIMPLEX
 fontScale              = 1
 fontColor              = (255,255,255)
@@ -43,17 +42,6 @@ lineType               = 2
 # allow the camera or video file to warm up
 vs =PiVideoStream().start()
 time.sleep(2.0)
-
-#Setup SPI comm
-spi = spidev.SpiDev()
-spi.open(0, 0)
-spi.max_speed_hz = 390625 
-# Split an integer input into a two byte array to send via SPI
-def write_pot(input):
-    #   msb = input >> 8
-    #    lsb = input & 0xFF
-    spi.xfer([input])
-
 
 #left
 GPIO.setmode(GPIO.BCM)
@@ -66,7 +54,7 @@ GPIO.output(25, 1)
 while True:
     #Grab a frame of the video feed
     frame = vs.read()
-    
+
     if frame is None:
         break
 
@@ -91,10 +79,10 @@ while True:
         cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
             cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
-        
+
         # only proceed if at least one contour was found
         if len(cnts) > 0:
-            
+
             #Find the contours of the car
             if color == "red":
                 minimum_size = 300
