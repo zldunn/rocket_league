@@ -1,9 +1,11 @@
 import cv2
 import numpy as np
+import time
+from imutils.video.pivideostream import PiVideoStream
 
-
-cap = cv2.VideoCapture(0)
-
+#cap = cv2.VideoCapture(0)
+vs = PiVideoStream().start()
+time.sleep(2)
 def nothing(x):
     pass
 # Creating a window for later use
@@ -18,8 +20,7 @@ cv2.createTrackbar('s', 'result',0,255,nothing)
 cv2.createTrackbar('v', 'result',0,255,nothing)
 
 while(1):
-
-    _, frame = cap.read()
+    frame = vs.read()
 
     #converting to HSV
     hsv = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
