@@ -29,7 +29,7 @@ args = vars(ap.parse_args())
 # define the lower and upper boundaries of the "green"
 # ball in the HSV color space, then initialize the
 
-lower_lab = {'red':(165, 32, 2),  'blue':(100, 200, 45), 'yellow':(25, 43, 255), 'orange':(0, 155, 55), 'teal': (69, 56, 187)}
+lower_lab = {'red':(165, 32, 2),  'blue':(100, 200, 45), 'yellow':(21, 120, 200), 'orange':(0, 155, 55), 'teal': (69, 56, 187)}
 upper_lab = {'red':(180,255,255), 'blue':(117,255,255), 'yellow':(54,255,255),'orange':(10,255,255), 'teal': (107, 160, 255)}
 lower = {'red':(165, 32, 2),  'blue':(100, 200, 45), 'yellow':(20, 66, 160), 'orange':(0, 119, 50), 'teal': (81, 66, 204)}
 upper = {'red':(180,255,255), 'blue':(117,255,255), 'yellow':(54,255,255),'orange':(10,255,255), 'teal': (100, 160, 255)}
@@ -70,7 +70,8 @@ GPIO.output(26, 0)
 GPIO.output(8, 0)
 
 def write_gpio(car, angle, direction):
-    L, R = 0
+    L = 0
+    R = 0
     if car == "yellow":
         L = 24
         R = 25
@@ -112,6 +113,7 @@ while True:
     hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
     rect1_center = None #The cennter of car1
+    rect2_center = None #The cennter of car1
     ball_center = None #The center of the game ball
     rect1_angle = None #Not sure
     rect1_to_ball = None #The angle between the car1 and the ball
@@ -166,6 +168,8 @@ while True:
                 if len(cnts) > 1:
                     if cv2.contourArea(second) > minimum_size:
                         rect2 = cv2.minAreaRect(second)
+                        rect2_center_float = rect[0] 
+                        rect2_center = (int(rect2_center_float[0]), int(rect2_center_float[1]))
                         box2 = cv2.boxPoints(rect2)
                         box2 = np.int0(box2)
                         cv2.drawContours(frame,[box2],0,(0,255,0),2)
@@ -190,21 +194,21 @@ while True:
                 blue_front_car = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
                 cv2.circle(frame, (int(x), int(y)), int(radius), colors[color], 2)
     if not ball_center:
-        write_gpio("blue", 0, direction)
-        write_gpio("yellow", 0, direction)
+        write_gpio("blue", 0, "L")
+        write_gpio("yellow", 0, "L")
     else:
         if rect1_center and yellow_front_car:
             #check if the smaller rectangle is closer
             yellow_center = rect1_center
             if rect2_center:
-                length1 = np.linalg.norm(rect1_center, yellow_front_car)
-                length2 = np.linalg.norm(rect2_center, yellow_front_car)
+                length1 = np.linalg.norm(np.array(rect1_center) - np.array(yellow_front_car))
+                length2 = np.linalg.norm(np.array(rect2_center) - np.array(yellow_front_car))
                 if length2 < length1:
                     yellow_center = rect2_center
 
 
             cv2.line(frame, yellow_center, ball_center, (0, 255, 0), 3)
-            cv2.line(frame, yellow_center, yello_front_car, (0, 255, 0), 3)
+            cv2.line(frame, yellow_center, yellow_front_car, (0, 255, 0), 3)
             b = yellow_center
             b += (0,)
             c = ball_center
@@ -225,8 +229,8 @@ while True:
             dir = 'L' if direction > 0 else 'R'
             angle = np.degrees(angle)
             print(angle)
-            print(direction)
-            write_gpio("yellow", angle, direction)
+            print(dir)
+            write_gpio("yellow", angle, dir)
             cv2.putText(frame,dir + ' ' + str(angle),
                 (Average([yellow_center[0], ball_center[0]]), Average([yellow_center[1],ball_center[1]])),
                 font,
@@ -236,14 +240,17 @@ while True:
         if rect1_center and blue_front_car:
             blue_center = rect1_center
             if rect2_center:
-                length1 = np.linalg.norm(rect1_center, blue_front_car)
-                length2 = np.linalg.norm(rect2_center, blue_front_car)
+                print(blue_front_car)
+                print(rect1_center) 
+                print(rect1_center) 
+                length1 = np.linalg.norm(np.array(rect1_center) - np.array(blue_front_car))
+                length2 = np.linalg.norm(np.array(rect2_center)- np.array(blue_front_car))
                 if length2 < length1:
                     blue_center = rect2_center
 
 
             cv2.line(frame, blue_center, ball_center, (0, 255, 0), 3)
-            cv2.line(frame, blue_center, yello_front_car, (0, 255, 0), 3)
+            cv2.line(frame, blue_center, blue_front_car, (0, 255, 0), 3)
             b = blue_center
             b += (0,)
             c = ball_center
@@ -264,18 +271,18 @@ while True:
             dir = 'L' if direction > 0 else 'R'
             angle = np.degrees(angle)
             print(angle)
-            print(direction)
-            write_gpio("blue", angle, direction)
+            print(dir)
+            write_gpio("blue", angle, dir)
             cv2.putText(frame,dir + ' ' + str(angle),
                 (Average([blue_center[0], ball_center[0]]), Average([blue_center[1],ball_center[1]])),
                 font,
                 fontScale,
                 fontColor,
                 lineType)
-        if not blue_center:
-                write_gpio("blue", angle, direction)
-        if not yellow_center:
-                write_gpio("yellow", angle, direction)
+        if not blue_front_car:
+                write_gpio("blue", 0, "L")
+        if not yellow_front_car:
+                write_gpio("yellow", 0, "L")
 
     cv2.imshow("Frame", frame)
     key = cv2.waitKey(1) & 0xFF
