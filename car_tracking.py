@@ -168,7 +168,7 @@ while True:
                 if len(cnts) > 1:
                     if cv2.contourArea(second) > minimum_size:
                         rect2 = cv2.minAreaRect(second)
-                        rect2_center_float = rect[0] 
+                        rect2_center_float = rect2[0] 
                         rect2_center = (int(rect2_center_float[0]), int(rect2_center_float[1]))
                         box2 = cv2.boxPoints(rect2)
                         box2 = np.int0(box2)
@@ -203,7 +203,9 @@ while True:
             if rect2_center:
                 length1 = np.linalg.norm(np.array(rect1_center) - np.array(yellow_front_car))
                 length2 = np.linalg.norm(np.array(rect2_center) - np.array(yellow_front_car))
-                if length2 < length1:
+                print(length1)
+                print(length2) 
+            	if length2 < length1:
                     yellow_center = rect2_center
 
 
