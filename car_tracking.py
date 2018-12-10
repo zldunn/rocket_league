@@ -61,8 +61,12 @@ def write_pot(input):
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(24, GPIO.OUT)
 GPIO.setup(25, GPIO.OUT)
+GPIO.setup(26, GPIO.OUT)
+GPIO.setup(8, GPIO.OUT)
 GPIO.output(24, 0)
-GPIO.output(25, 1)
+GPIO.output(25, 0)
+GPIO.output(26, 0)
+GPIO.output(8, 0)
 
 # keep looping
 while True:
