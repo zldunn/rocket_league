@@ -57,16 +57,45 @@ def write_pot(input):
     spi.xfer([input])
 
 
-#left
 GPIO.setmode(GPIO.BCM)
+#yellow
 GPIO.setup(24, GPIO.OUT)
 GPIO.setup(25, GPIO.OUT)
+#blue
 GPIO.setup(26, GPIO.OUT)
 GPIO.setup(8, GPIO.OUT)
 GPIO.output(24, 0)
 GPIO.output(25, 0)
 GPIO.output(26, 0)
 GPIO.output(8, 0)
+
+def write_gpio(car, angle, direction):
+    L, R = 0
+    if car == "yellow":
+        L = 24
+        R = 25
+    else:
+        L = 26
+        R = 8
+
+    if angle < 30:
+        GPIO.output(L, 0)
+        GPIO.output(R, 0)
+        print("sending 0")
+    elif direction == "L":
+        GPIO.output(L, 1)
+        GPIO.output(R, 0)
+        print("sending 1")
+
+    elif direction == "R":
+        GPIO.output(L, 0)
+        GPIO.output(R, 1)
+        print("sending 2")
+
+    else:
+        GPIO.output(L, 0)
+        GPIO.output(R, 0)
+        print("sending 0")
 
 # keep looping
 while True:
@@ -86,7 +115,9 @@ while True:
     ball_center = None #The center of the game ball
     rect1_angle = None #Not sure
     rect1_to_ball = None #The angle between the car1 and the ball
-    front_car = None #The center of the cricle at the front fo the car
+    yellow_front_car = None #The center of the cricle at the front fo the car
+    blue_front_car = None #The center of the cricle at the front fo the car
+
     upper_hsv = upper
     if args.get("lab", True):
         upper_hsv  = upper_lab
@@ -150,62 +181,102 @@ while True:
                 c = max(cnts, key=cv2.contourArea)
                 ((x, y), radius) = cv2.minEnclosingCircle(c)
                 M = cv2.moments(c)
-                front_car = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+                yellow_front_car = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
                 cv2.circle(frame, (int(x), int(y)), int(radius), colors[color], 2)
             elif color == "teal":
                 c = max(cnts, key=cv2.contourArea)
                 ((x, y), radius) = cv2.minEnclosingCircle(c)
                 M = cv2.moments(c)
+                blue_front_car = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
                 cv2.circle(frame, (int(x), int(y)), int(radius), colors[color], 2)
-    print(rect1_center)
-    if rect1_center and ball_center and front_car:
-        cv2.line(frame, rect1_center, ball_center, (0, 255, 0), 3)
-        b = rect1_center
-        b += (0,)
-        c = ball_center
-        c += (0,)
-        a = front_car
-        a +=(0,)
-        a = np.array(a)
-        b = np.array(b)
-        c = np.array(c)
+    if not ball_center:
+        write_gpio("blue", 0, direction)
+        write_gpio("yellow", 0, direction)
+    else:
+        if rect1_center and yellow_front_car:
+            #check if the smaller rectangle is closer
+            yellow_center = rect1_center
+            if rect2_center:
+                length1 = np.linalg.norm(rect1_center, yellow_front_car)
+                length2 = np.linalg.norm(rect2_center, yellow_front_car)
+                if length2 < length1:
+                    yellow_center = rect2_center
 
-        ba = a - b
-        bc = c - b
 
-        cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
-        angle = np.arccos(cosine_angle)
-        direction = np.cross(ba, bc)[2]
+            cv2.line(frame, yellow_center, ball_center, (0, 255, 0), 3)
+            cv2.line(frame, yellow_center, yello_front_car, (0, 255, 0), 3)
+            b = yellow_center
+            b += (0,)
+            c = ball_center
+            c += (0,)
+            a = yellow_front_car
+            a +=(0,)
+            a = np.array(a)
+            b = np.array(b)
+            c = np.array(c)
 
-        dir = 'L' if direction > 0 else 'R'
-        angle = np.degrees(angle)
-        print(angle)
-        print(direction)
-        if( angle < 30 ):
-            #write_pot(0x30)
-            GPIO.output(24, 0)
-            GPIO.output(25, 0)
-            print("sending: 0")
-        elif dir == 'L':
-            #write_pot(0x31)
-            GPIO.output(24, 1)
-            GPIO.output(25, 0)
-            print("sending: 1")
-        elif dir == 'R':
-            GPIO.output(24, 0)
-            GPIO.output(25, 1)
-            #write_pot(0x32)
-            print("sneding: 2")
-        else:
-            #write_pot(0x00)
-            print("sending: 0 cuz none")
+            ba = a - b
+            bc = c - b
 
-        cv2.putText(frame,dir + ' ' + str(angle),
-            (Average([rect1_center[0], ball_center[0]]), Average([rect1_center[1],ball_center[1]])),
-            font,
-            fontScale,
-            fontColor,
-            lineType)
+            cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+            angle = np.arccos(cosine_angle)
+            direction = np.cross(ba, bc)[2]
+
+            dir = 'L' if direction > 0 else 'R'
+            angle = np.degrees(angle)
+            print(angle)
+            print(direction)
+            write_gpio("yellow", angle, direction)
+            cv2.putText(frame,dir + ' ' + str(angle),
+                (Average([yellow_center[0], ball_center[0]]), Average([yellow_center[1],ball_center[1]])),
+                font,
+                fontScale,
+                fontColor,
+                lineType)
+        if rect1_center and blue_front_car:
+            blue_center = rect1_center
+            if rect2_center:
+                length1 = np.linalg.norm(rect1_center, blue_front_car)
+                length2 = np.linalg.norm(rect2_center, blue_front_car)
+                if length2 < length1:
+                    blue_center = rect2_center
+
+
+            cv2.line(frame, blue_center, ball_center, (0, 255, 0), 3)
+            cv2.line(frame, blue_center, yello_front_car, (0, 255, 0), 3)
+            b = blue_center
+            b += (0,)
+            c = ball_center
+            c += (0,)
+            a = blue_front_car
+            a +=(0,)
+            a = np.array(a)
+            b = np.array(b)
+            c = np.array(c)
+
+            ba = a - b
+            bc = c - b
+
+            cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+            angle = np.arccos(cosine_angle)
+            direction = np.cross(ba, bc)[2]
+
+            dir = 'L' if direction > 0 else 'R'
+            angle = np.degrees(angle)
+            print(angle)
+            print(direction)
+            write_gpio("blue", angle, direction)
+            cv2.putText(frame,dir + ' ' + str(angle),
+                (Average([blue_center[0], ball_center[0]]), Average([blue_center[1],ball_center[1]])),
+                font,
+                fontScale,
+                fontColor,
+                lineType)
+        if not blue_center:
+                write_gpio("blue", angle, direction)
+        if not yellow_center:
+                write_gpio("yellow", angle, direction)
+
     cv2.imshow("Frame", frame)
     key = cv2.waitKey(1) & 0xFF
     if key == ord('q'):
