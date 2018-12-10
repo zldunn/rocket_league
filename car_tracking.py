@@ -20,7 +20,7 @@ def Average(lst):
     return int(sum(lst) / len(lst))
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
-ap.add_argument("-v", "--video",
+ap.add_argument("-l", "--lab",
     help="path to the (optional) video file")
 ap.add_argument("-b", "--buffer", type=int, default=64,
     help="max buffer size")
@@ -29,6 +29,8 @@ args = vars(ap.parse_args())
 # define the lower and upper boundaries of the "green"
 # ball in the HSV color space, then initialize the
 
+lower_lab = {'red':(165, 32, 2),  'blue':(100, 200, 45), 'yellow':(20, 66, 160), 'orange':(0, 119, 50), 'teal': (81, 66, 204)}
+upper_lab = {'red':(180,255,255), 'blue':(117,255,255), 'yellow':(54,255,255),'orange':(10,255,255), 'teal': (100, 160, 255)}
 lower = {'red':(165, 32, 2),  'blue':(100, 200, 45), 'yellow':(20, 66, 160), 'orange':(0, 119, 50), 'teal': (81, 66, 204)}
 upper = {'red':(180,255,255), 'blue':(117,255,255), 'yellow':(54,255,255),'orange':(10,255,255), 'teal': (100, 160, 255)}
 colors = {'red':(0,0,255), 'green':(0,255,0), 'teal':(255,0,0), 'yellow':(0, 255, 217), 'orange':(0,140,255)}
@@ -47,7 +49,7 @@ time.sleep(2.0)
 #Setup SPI comm
 spi = spidev.SpiDev()
 spi.open(0, 0)
-spi.max_speed_hz = 390625 
+spi.max_speed_hz = 390625
 # Split an integer input into a two byte array to send via SPI
 def write_pot(input):
     #   msb = input >> 8
@@ -66,7 +68,7 @@ GPIO.output(25, 1)
 while True:
     #Grab a frame of the video feed
     frame = vs.read()
-    
+
     if frame is None:
         break
 
@@ -81,20 +83,26 @@ while True:
     rect1_angle = None #Not sure
     rect1_to_ball = None #The angle between the car1 and the ball
     front_car = None #The center of the cricle at the front fo the car
+    upper_hsv = upper
+    if args.get("lab", True):
+        upper_hsv  = upper_lab
 
-    for color, val in upper.items():
 
-        mask = cv2.inRange(hsv, lower[color], upper[color])
+    for color, val in upper_hsv.items():
+        lower_hsv = lower
+        if args.get("lower", True):
+            lower_hsv = lower_lab
+        mask = cv2.inRange(hsv, lower_hsv[color], upper_hsv[color])
         mask = cv2.erode(mask, None, iterations=2)
         mask = cv2.dilate(mask, None, iterations=2)
 
         cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
             cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
-        
+
         # only proceed if at least one contour was found
         if len(cnts) > 0:
-            
+
             #Find the contours of the car
             if color == "red":
                 minimum_size = 300
