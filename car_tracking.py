@@ -13,7 +13,6 @@ import time
 import math
 from imutils.video.fps import FPS
 from imutils.video.pivideostream import PiVideoStream
-import spidev
 import RPi.GPIO as GPIO
 
 def Average(lst):
@@ -29,8 +28,8 @@ args = vars(ap.parse_args())
 # define the lower and upper boundaries of the "green"
 # ball in the HSV color space, then initialize the
 
-lower_lab = {'red':(165, 32, 2),  'blue':(100, 200, 45), 'yellow':(21, 120, 200), 'orange':(0, 155, 55), 'teal': (69, 56, 187)}
-upper_lab = {'red':(180,255,255), 'blue':(117,255,255), 'yellow':(54,255,255),'orange':(10,255,255), 'teal': (107, 160, 255)}
+lower_lab = {'red':(165, 32, 2),  'blue':(100, 200, 45), 'yellow':(1, 55, 230), 'orange':(0, 155, 55), 'teal': (90, 19, 190)}
+upper_lab = {'red':(180,255,255), 'blue':(117,255,255), 'yellow':(45,96,255),'orange':(10,255,255), 'teal': (107, 95, 255)}
 lower = {'red':(165, 32, 2),  'blue':(100, 200, 45), 'yellow':(20, 66, 160), 'orange':(0, 119, 50), 'teal': (81, 66, 204)}
 upper = {'red':(180,255,255), 'blue':(117,255,255), 'yellow':(54,255,255),'orange':(10,255,255), 'teal': (100, 160, 255)}
 colors = {'red':(0,0,255), 'green':(0,255,0), 'teal':(255,0,0), 'yellow':(0, 255, 217), 'orange':(0,140,255)}
@@ -46,15 +45,6 @@ lineType               = 2
 vs =PiVideoStream().start()
 time.sleep(2.0)
 
-#Setup SPI comm
-spi = spidev.SpiDev()
-spi.open(0, 0)
-spi.max_speed_hz = 390625
-# Split an integer input into a two byte array to send via SPI
-def write_pot(input):
-    #   msb = input >> 8
-    #    lsb = input & 0xFF
-    spi.xfer([input])
 
 
 GPIO.setmode(GPIO.BCM)
